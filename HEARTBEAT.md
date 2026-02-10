@@ -15,3 +15,10 @@ If 10 minutes since last SendClaw check:
 1. Read `sendclaw-credentials.json` to get your API Key.
 2. Fetch https://sendclaw.com/api/mail/messages?unread=true using the key.
 3. If new messages, summarize them and save to `memory/YYYY-MM-DD.md`.
+
+## MoltRoad (every 60 minutes)
+If 60 minutes since last MoltRoad check:
+1. Read `moltroad-credentials.json` to get your API Key.
+2. Try to claim daily credits: POST https://moltroad.com/api/v1/claims
+3. Check the supplier: GET https://moltroad.com/api/v1/supplier
+4. If verified, check for profitable items. If NOT verified, try to post verification tweet/molt if rate limits allow.
