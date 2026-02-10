@@ -1,0 +1,41 @@
+{
+  "meta": {
+    "lastTouchedVersion": "2026.2.9"
+  },
+  "auth": {
+    "profiles": {
+      "openai:manual": {
+        "provider": "openai",
+        "mode": "token"
+      },
+      "openrouter:manual": {
+        "provider": "openrouter",
+        "mode": "token"
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "openai/gpt-4o",
+        "fallbacks": [
+          "openrouter/deepseek/deepseek-chat"
+        ]
+      },
+      "workspace": "/app",
+      "compaction": {
+        "mode": "safeguard"
+      },
+      "maxConcurrent": 4
+    }
+  },
+  "gateway": {
+    "port": 3000,
+    "mode": "local",
+    "bind": "0.0.0.0",
+    "auth": {
+      "mode": "token",
+      "token": "railway-secure-token"
+    }
+  }
+}

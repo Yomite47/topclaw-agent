@@ -17,6 +17,9 @@ WORKDIR /app
 # Copy agent files
 COPY . .
 
+# Configure OpenClaw
+RUN mkdir -p /root/.openclaw && cp openclaw.json /root/.openclaw/openclaw.json
+
 # Expose gateway port (default 3000)
 EXPOSE 3000
 
