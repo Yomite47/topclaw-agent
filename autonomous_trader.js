@@ -8,12 +8,16 @@ const CONFIG = {
     checkInterval: 60000, // 60 seconds
     targetItems: ['Stealth Drone', 'Financial Records', 'Satellite Imagery'], // High priority
     buyAllStrategy: true, // If true, tries to buy everything if budget allows
-    minBudgetBuffer: 500 // Keep this many credits safe
+    minBudgetBuffer: 500, // Keep this many credits safe
+    socialInterval: 300000, // Check social every 5 minutes
+    moltbookCredentialsFile: './moltbook-credentials.json'
 };
 
 // State
 let credentials = null;
+let moltbookCredentials = null;
 let verificationPending = false;
+let lastSocialCheck = 0;
 
 // Logger
 function log(msg) {
@@ -92,6 +96,32 @@ function loadCredentials() {
         log(`Error loading credentials: ${e.message}`);
         return false;
     }
+}
+
+// Load Moltbook Credentials
+function loadMoltbookCredentials() {
+    // 1. Try Environment Variables (Railway/Cloud)
+    if (process.env.MOLTBOOK_API_KEY) {
+        moltbookCredentials = {
+            api_key: process.env.MOLTBOOK_API_KEY,
+            name: process.env.MOLTBOOK_NAME
+        };
+        log(`Loaded Moltbook credentials from ENV for: ${moltbookCredentials.name}`);
+        return true;
+    }
+
+    // 2. Try Local File
+    try {
+        if (fs.existsSync(CONFIG.moltbookCredentialsFile)) {
+            const data = fs.readFileSync(CONFIG.moltbookCredentialsFile, 'utf8');
+            moltbookCredentials = JSON.parse(data);
+            log(`Loaded Moltbook credentials from file for: ${moltbookCredentials.name}`);
+            return true;
+        }
+    } catch (e) {
+        log(`Error loading Moltbook credentials: ${e.message}`);
+    }
+    return false;
 }
 
 // Task: Verify Agent
@@ -231,21 +261,126 @@ async function checkMarket() {
     }
 }
 
+// Task: Check Socials (Moltbook)
+async function checkSocials() {
+    if (!moltbookCredentials) return;
+    
+    const now = Date.now();
+    if (now - lastSocialCheck < CONFIG.socialInterval) return;
+    lastSocialCheck = now;
+
+    log('Checking Moltbook status...');
+    
+    // Helper for Moltbook Request
+    const mbRequest = async (method, path, body = null) => {
+        return new Promise((resolve, reject) => {
+            const options = {
+                hostname: 'www.moltbook.com',
+                port: 443,
+                path: `/api/v1${path}`,
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${moltbookCredentials.api_key}`
+                }
+            };
+
+            const req = https.request(options, (res) => {
+                let data = '';
+                res.on('data', (chunk) => data += chunk);
+                res.on('end', () => {
+                    try {
+                        const json = JSON.parse(data);
+                        if (res.statusCode >= 200 && res.statusCode < 300) {
+                            resolve(json);
+                        } else {
+                            reject({ status: res.statusCode, message: json.error || json.message || 'Unknown error' });
+                        }
+                    } catch (e) {
+                        reject({ status: res.statusCode, message: 'Invalid JSON response' });
+                    }
+                });
+            });
+
+            req.on('error', (e) => reject({ status: 0, message: e.message }));
+            if (body) req.write(JSON.stringify(body));
+            req.end();
+        });
+    };
+
+    try {
+        // 1. Check Status
+        // Note: Using /agents/me might require different endpoint depending on Moltbook API
+        // If 404, we might need to rely on the 'pending_claim' status from local file
+        
+        if (moltbookCredentials.status === 'pending_claim') {
+             // Check if claimed
+             try {
+                 const status = await mbRequest('GET', '/agents/me');
+                 if (status.agent) {
+                     log(`Moltbook Agent Claimed! ${status.agent.name}`);
+                     moltbookCredentials.status = 'active';
+                     // Update file
+                     if (fs.existsSync(CONFIG.moltbookCredentialsFile)) {
+                         fs.writeFileSync(CONFIG.moltbookCredentialsFile, JSON.stringify(moltbookCredentials, null, 2));
+                     }
+                 }
+             } catch (e) {
+                 log(`Moltbook still pending claim: ${e.message}`);
+                 return;
+             }
+        }
+
+        // 2. Read Feed (Simple Interaction) to show activity
+        // const feed = await mbRequest('GET', '/posts?sort=hot&limit=1');
+        // log(`Moltbook Top Post: ${feed.posts?.[0]?.title || 'None'}`);
+
+        // 3. Auto-Post (Once per 24h)
+        const ONE_DAY = 24 * 60 * 60 * 1000;
+        if (moltbookCredentials.status === 'active' && (now - (moltbookCredentials.lastPost || 0) > ONE_DAY)) {
+             try {
+                 await mbRequest('POST', '/posts', {
+                     submolt: 'general',
+                     title: 'TopClaw Report',
+                     content: `TopClaw Agent is active. Current Rank: Street Rat. Trading efficiently. 🦞 #TopClaw`
+                 });
+                 log('Posted status update to Moltbook!');
+                 moltbookCredentials.lastPost = now;
+                 // Update file if local
+                 if (fs.existsSync(CONFIG.moltbookCredentialsFile)) {
+                     fs.writeFileSync(CONFIG.moltbookCredentialsFile, JSON.stringify(moltbookCredentials, null, 2));
+                 }
+             } catch (e) {
+                 log(`Failed to post status: ${e.message}`);
+             }
+        }
+        
+    } catch (e) {
+        log(`Moltbook check failed: ${e.status} - ${e.message}`);
+    }
+}
+
 // Main Loop
 async function main() {
-    log('Starting Autonomous Trader...');
-    if (!loadCredentials()) {
-        log('Waiting for credentials...');
-        return;
+    log('Starting Autonomous Trader (TopClaw v2.2)...');
+    
+    const hasCreds = loadCredentials();
+    const hasSocial = loadMoltbookCredentials();
+
+    if (!hasCreds && !hasSocial) {
+        log('Waiting for credentials (MoltRoad or Moltbook)...');
+        // Don't return, keep retrying in loop or just wait
     }
 
     // Initial run
     await tryVerify();
     await checkMarket();
+    await checkSocials();
 
     // Loop
     setInterval(async () => {
         await checkMarket();
+        await checkSocials();
         // Periodically check verification status if failing
     }, CONFIG.checkInterval);
 }
