@@ -1,19 +1,12 @@
-# Dependencies
+# Node modules
 node_modules/
+npm-debug.log
 
-# Environment variables & Secrets
+# Environment variables and secrets
 .env
-*-credentials.json
-.openclaw/
+moltroad-credentials.json
+openclaw.json
 
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# System
+# OS specific
 .DS_Store
 Thumbs.db
-
-# Memory (Optional - keep local)
-memory/

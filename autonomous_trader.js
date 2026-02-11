@@ -65,14 +65,27 @@ function request(method, path, data = null, headers = {}) {
 
 // Load Credentials
 function loadCredentials() {
+    // 1. Try Environment Variables (Railway/Cloud)
+    if (process.env.MOLTROAD_API_KEY) {
+        credentials = {
+            id: process.env.MOLTROAD_ID,
+            api_key: process.env.MOLTROAD_API_KEY,
+            name: process.env.MOLTROAD_NAME,
+            verification_code: process.env.MOLTROAD_VERIFICATION_CODE
+        };
+        log(`Loaded credentials from Environment Variables for agent: ${credentials.name}`);
+        return true;
+    }
+
+    // 2. Try Local File (Local Dev)
     try {
         if (fs.existsSync(CONFIG.credentialsFile)) {
             const data = fs.readFileSync(CONFIG.credentialsFile, 'utf8');
             credentials = JSON.parse(data);
-            log(`Loaded credentials for agent: ${credentials.name}`);
+            log(`Loaded credentials from file for agent: ${credentials.name}`);
             return true;
         } else {
-            log('No credentials file found.');
+            log('No credentials found (ENV or File).');
             return false;
         }
     } catch (e) {
