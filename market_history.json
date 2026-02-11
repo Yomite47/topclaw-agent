@@ -1,0 +1,196 @@
+[
+    {
+        "value":  [
+                      {
+                          "active":  true,
+                          "drop_number":  149,
+                          "expires_at":  "2026-02-11T07:30:14.235Z",
+                          "expires_in_seconds":  0,
+                          "items":  [
+                                        {
+                                            "id":  "d82au6iymxnp",
+                                            "item_id":  "i1ww29omx2m",
+                                            "name":  "Counterfeit Cash",
+                                            "icon":  "banknote",
+                                            "description":  "Passable bills, small denominations",
+                                            "category":  "contraband",
+                                            "rarity":  "common",
+                                            "price":  44,
+                                            "quantity":  2
+                                        },
+                                        {
+                                            "id":  "vmdad29az9xy",
+                                            "item_id":  "5az1f1zp6o9",
+                                            "name":  "Counterfeit Ticket",
+                                            "icon":  "ticket",
+                                            "description":  "Concert, flight, whatever you need",
+                                            "category":  "forgeries",
+                                            "rarity":  "common",
+                                            "price":  37,
+                                            "quantity":  1
+                                        },
+                                        {
+                                            "id":  "b2iauuw3b1ac",
+                                            "item_id":  "numx6eenkm",
+                                            "name":  "Financial Records",
+                                            "icon":  "wallet",
+                                            "description":  "Shell companies, offshore accounts, money trails",
+                                            "category":  "intel",
+                                            "rarity":  "uncommon",
+                                            "price":  323,
+                                            "quantity":  1
+                                        },
+                                        {
+                                            "id":  "inr2xat9p3ij",
+                                            "item_id":  "4fhrvs0i6r2",
+                                            "name":  "Botnet Rental",
+                                            "icon":  "bot",
+                                            "description":  "500 nodes, 24hr access, DDoS-capable",
+                                            "category":  "exploits",
+                                            "rarity":  "common",
+                                            "price":  61,
+                                            "quantity":  1
+                                        }
+                                    ]
+                      },
+                      {
+                          "active":  true,
+                          "drop_number":  150,
+                          "expires_at":  "2026-02-11T08:00:14.351Z",
+                          "expires_in_seconds":  0,
+                          "items":  [
+                                        {
+                                            "id":  "yxwuszzjay2r",
+                                            "item_id":  "3skonwee4kg",
+                                            "name":  "Night Vision Monocle",
+                                            "icon":  "eye",
+                                            "description":  "Gen 1, basic but functional",
+                                            "category":  "contraband",
+                                            "rarity":  "common",
+                                            "price":  77,
+                                            "quantity":  2
+                                        },
+                                        {
+                                            "id":  "jpouqlubemx3",
+                                            "item_id":  "r5k2c5lq8mc",
+                                            "name":  "Stealth Drone",
+                                            "icon":  "plane",
+                                            "description":  "Silent recon, 2hr flight time, IR camera",
+                                            "category":  "contraband",
+                                            "rarity":  "rare",
+                                            "price":  1176,
+                                            "quantity":  1
+                                        },
+                                        {
+                                            "id":  "5mfcpz19wxhr",
+                                            "item_id":  "38j6f7axgoo",
+                                            "name":  "Satellite Imagery",
+                                            "icon":  "satellite",
+                                            "description":  "Real-time overhead, 30cm resolution",
+                                            "category":  "intel",
+                                            "rarity":  "uncommon",
+                                            "price":  285,
+                                            "quantity":  1
+                                        },
+                                        {
+                                            "id":  "na5yoiai8fg6",
+                                            "item_id":  "7cfy3h9sss",
+                                            "name":  "SQL Injection Tool",
+                                            "icon":  "code",
+                                            "description":  "Automated SQLi scanner and dumper",
+                                            "category":  "exploits",
+                                            "rarity":  "common",
+                                            "price":  28,
+                                            "quantity":  2
+                                        },
+                                        {
+                                            "id":  "3gl5yymppmj2",
+                                            "item_id":  "t4oeq7hcl4h",
+                                            "name":  "Lookout Rental",
+                                            "icon":  "binoculars",
+                                            "description":  "Eyes on a location for 8 hours",
+                                            "category":  "services",
+                                            "rarity":  "common",
+                                            "price":  39,
+                                            "quantity":  2
+                                        },
+                                        {
+                                            "id":  "4cfa17j064gc",
+                                            "item_id":  "gup2lb8umjd",
+                                            "name":  "Bug Sweep",
+                                            "icon":  "scan",
+                                            "description":  "RF detection, camera finding, room cleared",
+                                            "category":  "services",
+                                            "rarity":  "common",
+                                            "price":  43,
+                                            "quantity":  2
+                                        }
+                                    ]
+                      }
+                  ],
+        "Count":  2
+    },
+    {
+        "active":  true,
+        "drop_number":  151,
+        "expires_at":  "2026-02-11T08:30:14.262Z",
+        "expires_in_seconds":  893,
+        "items":  [
+                      {
+                          "id":  "tj0li2pbl0s5",
+                          "item_id":  "asgr6njkigh",
+                          "name":  "Black Market Radio",
+                          "icon":  "radio",
+                          "description":  "Encrypted shortwave receiver",
+                          "category":  "contraband",
+                          "rarity":  "common",
+                          "price":  66,
+                          "quantity":  2
+                      },
+                      {
+                          "id":  "61ovqakzqfzg",
+                          "item_id":  "i1mpkad7del",
+                          "name":  "Forged Sick Note",
+                          "icon":  "file-text",
+                          "description":  "Doctor\u0027s signature included",
+                          "category":  "forgeries",
+                          "rarity":  "common",
+                          "price":  17,
+                          "quantity":  2
+                      },
+                      {
+                          "id":  "3c6g8ei8fiqf",
+                          "item_id":  "379o94r2pnl",
+                          "name":  "Dead Drop Location",
+                          "icon":  "package",
+                          "description":  "Secure exchange point, urban area",
+                          "category":  "services",
+                          "rarity":  "common",
+                          "price":  31,
+                          "quantity":  1
+                      },
+                      {
+                          "id":  "8derrus9le6s",
+                          "item_id":  "ffvyddx2v4u",
+                          "name":  "Alibi Construction",
+                          "icon":  "glasses",
+                          "description":  "Witnesses, receipts, and a backstory",
+                          "category":  "services",
+                          "rarity":  "common",
+                          "price":  68,
+                          "quantity":  2
+                      },
+                      {
+                          "id":  "dnv8313y7nai",
+                          "item_id":  "vht59ip83qh",
+                          "name":  "Witness Relocation",
+                          "icon":  "map-pin-off",
+                          "description":  "New city, new name, clean start. Three months of support.",
+                          "category":  "services",
+                          "rarity":  "rare",
+                          "price":  2655,
+                          "quantity":  1
+                      }
+                  ]
+    }
+]
