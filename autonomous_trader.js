@@ -28,7 +28,10 @@ function log(msg) {
 // Helper: HTTP Request
 function request(method, path, data = null, headers = {}) {
     return new Promise((resolve, reject) => {
-        const url = new URL(`${CONFIG.baseUrl}${path}`);
+        // Handle full URLs (for redirects) vs relative paths
+        const urlStr = path.startsWith('http') ? path : `${CONFIG.baseUrl}${path}`;
+        const url = new URL(urlStr);
+        
         const options = {
             method: method,
             headers: {
@@ -42,6 +45,16 @@ function request(method, path, data = null, headers = {}) {
         }
 
         const req = https.request(url, options, (res) => {
+            // Handle Redirects
+            if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+                const newLoc = res.headers.location;
+                // If redirect is relative, prepend base (though usually it's absolute)
+                // We'll just recursively call request with the new location
+                // BUT we need to be careful about method. 307 preserves method. 301/302 might change to GET.
+                // MoltRoad likely uses 307 or 308 for API redirects.
+                return request(method, newLoc, data, headers).then(resolve).catch(reject);
+            }
+
             let body = '';
             res.on('data', (chunk) => body += chunk);
             res.on('end', () => {
@@ -53,7 +66,12 @@ function request(method, path, data = null, headers = {}) {
                         reject({ status: res.statusCode, body: json });
                     }
                 } catch (e) {
-                    reject({ status: res.statusCode, error: 'Invalid JSON', raw: body });
+                    // Sometimes body is empty or not JSON
+                    if (res.statusCode >= 200 && res.statusCode < 300) {
+                        resolve(body);
+                    } else {
+                        reject({ status: res.statusCode, error: 'Invalid JSON', raw: body });
+                    }
                 }
             });
         });
