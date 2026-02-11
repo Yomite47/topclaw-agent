@@ -23,5 +23,5 @@ RUN mkdir -p /root/.openclaw && cp openclaw.json /root/.openclaw/openclaw.json
 # Expose gateway port (default 3000)
 EXPOSE 3000
 
-# Start the agent gateway
-CMD ["openclaw", "gateway", "--host", "0.0.0.0"]
+# Start the agent gateway and the autonomous trader
+CMD ["sh", "-c", "node autonomous_trader.js & openclaw gateway --host 0.0.0.0"]
