@@ -4,8 +4,14 @@ npm-debug.log
 
 # Environment variables and secrets
 .env
+.env*
 *-credentials.json
 openclaw.json
+
+# Local State
+dashboard_state.json
+solana_state.json
+market_history.json
 
 # OS specific
 .DS_Store

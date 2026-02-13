@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TopClaw // WAR ROOM</title>
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --panel: #111;
+            --border: #333;
+            --primary: #00ff41;
+            --accent: #ff0055;
+            --text: #e0e0e0;
+            --font: 'Courier New', Courier, monospace;
+        }
+        
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            margin: 0;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            grid-template-rows: auto 1fr;
+            gap: 20px;
+            height: 100vh;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        h1, h2, h3 { margin: 0; text-transform: uppercase; letter-spacing: 2px; }
+        
+        header {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+        }
+
+        .status-badge {
+            background: var(--primary);
+            color: #000;
+            padding: 5px 10px;
+            font-weight: bold;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            padding: 15px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel h2 {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            color: var(--primary);
+            font-size: 1.2rem;
+        }
+
+        #stats-panel {
+            grid-column: 1;
+            grid-row: 2;
+        }
+
+        #logs-panel {
+            grid-column: 2;
+            grid-row: 2;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            border-bottom: 1px solid #222;
+            padding-bottom: 2px;
+            font-size: 0.9rem;
+        }
+        
+        .log-time { color: #666; margin-right: 10px; }
+        .log-msg { color: #ccc; }
+        .log-alert { color: var(--accent); font-weight: bold; }
+        .log-success { color: var(--primary); }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .stat-label { color: #888; }
+        .stat-value { font-weight: bold; }
+
+        #sniper-list {
+            margin-top: 20px;
+        }
+        
+        .sniper-hit {
+            border: 1px solid var(--accent);
+            padding: 5px;
+            margin-bottom: 5px;
+            color: var(--accent);
+        }
+
+        /* Matrix Rain Effect (Simple CSS Animation) */
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .live-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: blink 1s infinite;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>TopClaw <span style="font-size:0.5em">// AUTONOMOUS SYSTEM</span></h1>
+        <div>
+            <span class="live-dot"></span> LIVE CONNECTION
+        </div>
+    </header>
+
+    <div id="stats-panel" class="panel">
+        <h2>System Status</h2>
+        <div class="stat-row">
+            <span class="stat-label">AGENT:</span>
+            <span class="stat-value" id="agent-name">...</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">CREDITS:</span>
+            <span class="stat-value" id="agent-credits" style="color: gold;">...</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">RANK:</span>
+            <span class="stat-value" id="agent-rank">...</span>
+        </div>
+        <div class="stat-card">
+            <h3>Status</h3>
+            <div class="value" id="agent-status">Loading...</div>
+        </div>
+        <div class="stat-card">
+            <h3>Jobs / Earnings</h3>
+            <div class="value" id="jobs-stats">0 / 0.00c</div>
+        </div>
+        <div class="stat-card">
+            <h3>PsyOps Deployed</h3>
+            <div class="value" id="psyops-stats">0</div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="panel logs-panel">
+            <h2>Mission Logs</h2>
+            <div id="logs-container">
+                <!-- Logs here -->
+            </div>
+        </div>
+        
+        <!-- Solana Panel -->
+        <div class="panel" id="solana-panel">
+            <h2>Solana Operations 🦁</h2>
+            <div class="stat-row">
+                <span class="stat-label">BALANCE:</span>
+                <span class="stat-value" id="sol-balance" style="color: #bf94e4;">...</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">SCANNED:</span>
+                <span class="stat-value" id="sol-scanned">0</span>
+            </div>
+            <div class="stat-card">
+                <h3>Active Trade</h3>
+                <div class="value" id="sol-active-trade">None</div>
+            </div>
+            <div class="stat-card">
+                <h3>Last Log</h3>
+                <div class="value" id="sol-last-log" style="font-size: 0.8rem; color: #888;">...</div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Active Operations</h2>
+            <div id="sniper-container">
+                <!-- Content replaced by JS -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateDashboard() {
+            fetch('/api/state')
+                .then(res => res.json())
+                .then(data => {
+                    // Update Stats
+                    document.getElementById('agent-name').innerText = data.agent.name || 'Unknown';
+                    document.getElementById('agent-credits').innerText = (data.agent.credits || 0).toLocaleString() + ' c';
+                    document.getElementById('agent-rank').innerText = data.agent.rank || 'Unknown';
+                    document.getElementById('agent-status').innerText = data.agent.status || 'Offline';
+
+                    // Update New Stats
+                    if (data.jobs) {
+                        document.getElementById('jobs-stats').innerText = `${data.jobs.submitted.length} / ${data.jobs.earnings.toFixed(2)}c`;
+                    }
+                    if (data.psyops) {
+                        document.getElementById('psyops-stats').innerText = `${data.psyops.totalPosts}`;
+                    }
+
+                    // Update Solana Stats
+                    if (data.solana) {
+                        document.getElementById('sol-balance').innerText = `${(data.solana.balance || 0).toFixed(4)} SOL`;
+                        document.getElementById('sol-scanned').innerText = `${data.solana.scannedCount || 0}`;
+                        
+                        if (data.solana.activeTrade) {
+                            const trade = data.solana.activeTrade;
+                            const pnl = trade.pnlPercent ? trade.pnlPercent.toFixed(2) : '0.00';
+                            const color = pnl >= 0 ? 'var(--primary)' : 'var(--accent)';
+                            document.getElementById('sol-active-trade').innerHTML = 
+                                `${trade.symbol} <span style="color:${color}">(${pnl}%)</span>`;
+                        } else {
+                            document.getElementById('sol-active-trade').innerText = "Scanning...";
+                        }
+
+                        if (data.solana.logs && data.solana.logs.length > 0) {
+                             // Clean log msg
+                             const lastLog = data.solana.logs[0].replace(/^\[.*?\] 🦁 /, '');
+                             document.getElementById('sol-last-log').innerText = lastLog;
+                        }
+                    }
+
+                    // Update Logs
+                    const logsContainer = document.getElementById('logs-container');
+                    logsContainer.innerHTML = '';
+                    if (data.logs && data.logs.length > 0) {
+                        data.logs.forEach(log => {
+                            const div = document.createElement('div');
+                            div.className = 'log-entry';
+                            
+                            // Parse timestamp and msg
+                            const match = log.match(/^\[(.*?)\] (.*)$/);
+                            if (match) {
+                                const time = match[1].split('T')[1].split('.')[0]; // HH:MM:SS
+                                const msg = match[2];
+                                
+                                let typeClass = 'log-msg';
+                                if (msg.includes('SNIPER') || msg.includes('Failed') || msg.includes('Error')) typeClass = 'log-alert';
+                                if (msg.includes('SUCCESS') || msg.includes('Secured') || msg.includes('Crafted')) typeClass = 'log-success';
+
+                                div.innerHTML = `<span class="log-time">${time}</span><span class="${typeClass}">${msg}</span>`;
+                            } else {
+                                div.innerText = log;
+                            }
+                            logsContainer.appendChild(div);
+                        });
+                    }
+
+                    // Update Sniper Hits
+                    const sniperContainer = document.getElementById('sniper-container');
+                    if (sniperContainer) {
+                        sniperContainer.innerHTML = '';
+                        const marketData = data.market || {};
+                        const opportunities = marketData.opportunities || [];
+                        
+                        if (opportunities.length > 0) {
+                            opportunities.forEach(hit => {
+                                const div = document.createElement('div');
+                                div.className = 'sniper-hit';
+                                div.innerHTML = `<strong>[${hit.rarity}]</strong> ${hit.name} @ <span style="color:gold">${hit.price}c</span>`;
+                                sniperContainer.appendChild(div);
+                            });
+                        } else {
+                            sniperContainer.innerHTML = '<div style="color:#444">Scanning Market... (No targets yet)</div>';
+                        }
+                    }
+                })
+                .catch(err => console.error(err));
+        }
+
+        // Poll every 1 second
+        setInterval(updateDashboard, 1000);
+        updateDashboard();
+    </script>
+</body>
+</html>

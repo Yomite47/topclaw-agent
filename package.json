@@ -4,6 +4,7 @@
   "description": "",
   "main": "autonomous_trader.js",
   "scripts": {
+    "start": "bash start_agent.sh",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -19,10 +20,15 @@
   },
   "homepage": "https://github.com/Yomite47/topclaw-agent#readme",
   "dependencies": {
+    "@solana/web3.js": "^1.98.4",
     "bitcoinjs-lib": "^7.0.1",
-    "bitcoinjs-message": "^2.2.0",
+    "bs58": "^6.0.0",
+    "cross-fetch": "^4.1.0",
+    "dotenv": "^17.3.1",
     "ecpair": "^3.0.0",
+    "node-fetch": "^3.3.2",
     "tiny-secp256k1": "^2.2.4",
+    "twitter-api-v2": "^1.29.0",
     "wif": "^5.0.0"
   }
 }

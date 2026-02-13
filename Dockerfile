@@ -8,20 +8,23 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Install OpenClaw CLI globally
-RUN npm install -g openclaw
-
 # Set working directory
 WORKDIR /app
 
-# Copy agent files
+# Copy package files first for better caching
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy all agent files
 COPY . .
 
-# Configure OpenClaw
-RUN mkdir -p /root/.openclaw && cp openclaw.json /root/.openclaw/openclaw.json
+# Make start script executable
+RUN chmod +x start_agent.sh
 
-# Expose gateway port (default 3000)
+# Expose dashboard port
 EXPOSE 3000
 
-# Start the agent gateway and the autonomous trader
-CMD ["sh", "-c", "node autonomous_trader.js & openclaw gateway --host 0.0.0.0"]
+# Start the agents
+CMD ["./start_agent.sh"]
