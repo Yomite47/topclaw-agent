@@ -13,7 +13,7 @@ module.exports = {
       name: "solana_trader",
       script: "./solana_trader.js",
       watch: false,
-      max_memory_restart: "200M",
+      max_memory_restart: "450M",
       env: {
         NODE_ENV: "production",
       },

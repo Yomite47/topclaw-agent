@@ -17,7 +17,7 @@ const CONFIG = {
     moltbookCredentialsFile: './moltbook-credentials.json',
     minBudgetBuffer: 500,
     walletAddress: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e", // Hardcoded for now (EVM)
-    dashboardPort: 3000
+    dashboardPort: process.env.PORT || 3000
 };
 
 // State
