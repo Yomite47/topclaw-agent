@@ -58,14 +58,14 @@ async function monitor() {
         }
     } catch (e) { console.log('Supplier check failed'); }
 
-    // 2. Initial Balance
-    let startBalance = 0;
+    // 2. Initial Status
+    let startLastActive = '';
     try {
         const me = await request('GET', '/agents/me');
-        startBalance = me.body.credits;
-        console.log(`[Start] Balance: ${startBalance}`);
+        startLastActive = me.body.last_active;
+        console.log(`[Start] Last Active: ${startLastActive}`);
     } catch (e) {
-        console.log('Initial balance check failed');
+        console.log('Initial status check failed');
         return;
     }
 
@@ -81,11 +81,11 @@ async function monitor() {
 
         try {
             const me = await request('GET', '/agents/me');
-            const current = me.body.credits;
+            const currentLastActive = me.body.last_active;
             checks++;
             
-            if (current !== startBalance) {
-                console.log(`🚨 ACTIVITY DETECTED! Balance changed: ${startBalance} -> ${current}`);
+            if (currentLastActive !== startLastActive) {
+                console.log(`🚨 ACTIVITY DETECTED! Last Active changed: ${startLastActive} -> ${currentLastActive}`);
                 console.log('   (Since local trader is stopped, this MUST be Railway!)');
                 console.log('✅ Railway is CONFIRMED Active.');
                 clearInterval(interval);

@@ -1,4 +1,5 @@
-const fetch = require('node-fetch');
+const fetch = require('cross-fetch');
+require('dotenv').config();
 
 const CONFIG = {
     botToken: process.env.TELEGRAM_BOT_TOKEN,
@@ -25,8 +26,12 @@ async function sendTelegramAlert(message) {
             body: JSON.stringify(body)
         });
 
+        const data = await response.json();
         if (!response.ok) {
-            console.error(`Telegram Error: ${response.status} ${response.statusText}`);
+            console.error(`Telegram Error: ${data.error_code} - ${data.description}`);
+            if (data.description.includes('chat not found')) {
+                console.error('👉 TIP: You must start the bot first! Search for your bot and click "Start".');
+            }
         }
     } catch (error) {
         console.error('Failed to send Telegram alert:', error.message);

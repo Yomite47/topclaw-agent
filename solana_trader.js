@@ -1,8 +1,27 @@
 const { Connection, Keypair, VersionedTransaction, PublicKey } = require('@solana/web3.js');
+const { sendTelegramAlert } = require('./telegram_client');
 const fetch = require('cross-fetch');
 const bs58 = require('bs58').default || require('bs58');
 const fs = require('fs');
 const dotenv = require('dotenv');
+
+// Helper: Fetch with Retry
+async function fetchWithRetry(url, options = {}, retries = 3, backoff = 1000) {
+    try {
+        const res = await fetch(url, options);
+        if (!res.ok && res.status >= 500) {
+             throw new Error(`Server Error: ${res.status} ${res.statusText}`);
+        }
+        return res;
+    } catch (err) {
+        if (retries > 0) {
+            console.log(`⚠️ Fetch Error (${err.message}). Retrying in ${backoff}ms...`);
+            await new Promise(resolve => setTimeout(resolve, backoff));
+            return fetchWithRetry(url, options, retries - 1, backoff * 2);
+        }
+        throw err;
+    }
+}
 
 // Load environment variables
 dotenv.config({ path: './.env.solana' });
@@ -11,7 +30,7 @@ dotenv.config({ path: './.env.solana' });
 const CONFIG = {
     RPC_URL: process.env.RPC_ENDPOINT || 'https://api.mainnet-beta.solana.com',
     PRIVATE_KEY: process.env.PRIVATE_KEY_SOL,
-    JUPITER_API: 'https://quote-api.jup.ag/v6',
+    JUPITER_API: 'https://public.jupiterapi.com',
     DEXSCREENER_API: 'https://api.dexscreener.com/latest/dex',
     SOL_MINT: 'So11111111111111111111111111111111111111112',
     TRADE_AMOUNT_SOL: parseFloat(process.env.TRADE_AMOUNT_SOL || '0.02'), // ~ $3-$4 depending on SOL price
@@ -38,6 +57,24 @@ const dashboardState = {
     logs: []
 };
 
+// Load State Immediately to prevent overwriting
+try {
+    if (fs.existsSync('solana_state.json')) {
+        const raw = fs.readFileSync('solana_state.json', 'utf8');
+        const savedState = JSON.parse(raw);
+        if (savedState) {
+            dashboardState.balance = savedState.balance || 0;
+            dashboardState.activeTrade = savedState.activeTrade || null;
+            dashboardState.scannedCount = savedState.scannedCount || 0;
+            dashboardState.lastScan = savedState.lastScan || null;
+            dashboardState.logs = savedState.logs || [];
+            activeTrade = dashboardState.activeTrade; // Restore global var
+        }
+    }
+} catch (e) {
+    // ignore
+}
+
 function saveDashboardState() {
     try {
         fs.writeFileSync('solana_state.json', JSON.stringify(dashboardState, null, 2));
@@ -53,9 +90,10 @@ function log(msg) {
     console.log(logMsg);
     
     // Send trade executions to Telegram
-    if (msg.includes('BUY') || msg.includes('SELL') || msg.includes('PROFIT') || msg.includes('Rug Check Failed')) {
-        sendTelegramAlert(`*Solana Trader:*\n${msg}`);
-    }
+    // REMOVED AUTO ALERTS to reduce spam
+    // if (msg.includes('BUY') || msg.includes('SELL') || msg.includes('PROFIT') || msg.includes('Rug Check Failed')) {
+    //    sendTelegramAlert(`*Solana Trader:*\n${msg}`);
+    // }
 
     // Update Dashboard Logs
     dashboardState.logs.unshift(logMsg);
@@ -66,7 +104,7 @@ function log(msg) {
 // INITIALIZATION
 async function init() {
     log('Initializing Autonomous Solana Trader...');
-
+ 
     if (!CONFIG.PRIVATE_KEY || CONFIG.PRIVATE_KEY.includes('YOUR_PRIVATE_KEY')) {
         log('❌ ERROR: Missing Private Key in .env.solana');
         process.exit(1);
@@ -139,9 +177,9 @@ async function checkSellability(mintAddress) {
         log(`🧪 Checking sellability for ${mintAddress}...`);
         // Check if we can sell 1000 units (arbitrary small amount) back to SOL
         // If route exists, it's likely not a hard honeypot
-        const amount = 1000; 
+        const amount = 1000000; // 1 million units (better for 6-9 decimal tokens)
         const quoteUrl = `${CONFIG.JUPITER_API}/quote?inputMint=${mintAddress}&outputMint=${CONFIG.SOL_MINT}&amount=${amount}&slippageBps=${CONFIG.SLIPPAGE_BPS}`;
-        const quoteRes = await fetch(quoteUrl);
+        const quoteRes = await fetchWithRetry(quoteUrl);
         const quote = await quoteRes.json();
 
         if (quote.error) {
@@ -219,7 +257,7 @@ async function swap(inputMint, outputMint, amountLamports, action = 'BUY') {
         
         // Get Quote
         const quoteUrl = `${CONFIG.JUPITER_API}/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amountLamports}&slippageBps=${CONFIG.SLIPPAGE_BPS}`;
-        const quoteRes = await fetch(quoteUrl);
+        const quoteRes = await fetchWithRetry(quoteUrl);
         const quote = await quoteRes.json();
 
         if (quote.error) throw new Error(quote.error);
@@ -227,7 +265,7 @@ async function swap(inputMint, outputMint, amountLamports, action = 'BUY') {
         log(`📊 Quote: ${quote.outAmount} units expected.`);
 
         // Get Swap Transaction
-        const swapRes = await fetch(`${CONFIG.JUPITER_API}/swap`, {
+        const swapRes = await fetchWithRetry(`${CONFIG.JUPITER_API}/swap`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -259,14 +297,39 @@ async function swap(inputMint, outputMint, amountLamports, action = 'BUY') {
         return { txid, outAmount: quote.outAmount };
 
     } catch (e) {
-        log(`❌ Swap Failed: ${e.message}`);
+        log(`❌ Swap Failed: ${e.message || JSON.stringify(e)}`);
+        if (action === 'SELL') {
+             const now = Date.now();
+             // Throttle error alerts: max 1 per 5 minutes
+             if (now - lastErrorAlert > 300000) {
+                 sendTelegramAlert(`*Solana Trader:* 🚨 SELL FAILED! Manual Intervention Required.\nError: ${e.message || JSON.stringify(e)}`);
+                 lastErrorAlert = now;
+             }
+        }
         return null;
     }
 }
 
+let lastErrorAlert = 0;
+
 // 3. MAIN LOOP
 async function main() {
     await init();
+
+    // RESTORE STATE
+    try {
+        if (fs.existsSync('solana_state.json')) {
+            const raw = fs.readFileSync('solana_state.json', 'utf8');
+            const state = JSON.parse(raw);
+            if (state.activeTrade) {
+                activeTrade = state.activeTrade;
+                dashboardState.activeTrade = activeTrade;
+                log(`♻️ Restored active trade: ${activeTrade.symbol} (Entry: $${activeTrade.entryPrice})`);
+            }
+        }
+    } catch (e) {
+        log(`⚠️ Failed to restore state: ${e.message}`);
+    }
 
     while (true) {
         try {
@@ -275,7 +338,7 @@ async function main() {
                 log(`👀 Monitoring active trade: ${activeTrade.symbol || 'Unknown'}...`);
                 
                 // Fetch current price
-                const res = await fetch(`${CONFIG.DEXSCREENER_API}/tokens/${activeTrade.tokenAddress}`);
+                const res = await fetchWithRetry(`${CONFIG.DEXSCREENER_API}/tokens/${activeTrade.tokenAddress}`);
                 const data = await res.json();
                 
                 if (data.pairs && data.pairs[0]) {
@@ -296,12 +359,14 @@ async function main() {
                     // SELL CONDITIONS
                     if (pnlPercent >= CONFIG.TAKE_PROFIT_PERCENT) {
                         log(`🤑 TAKE PROFIT TRIGGERED (+${pnlPercent.toFixed(2)}%)`);
+                        sendTelegramAlert(`*Solana Trader:* 🤑 Take Profit Triggered! (+${pnlPercent.toFixed(2)}%)`);
                         await swap(activeTrade.tokenAddress, CONFIG.SOL_MINT, activeTrade.amountTokens, 'SELL');
                         activeTrade = null;
                         dashboardState.activeTrade = null;
                         saveDashboardState();
                     } else if (pnlPercent <= -CONFIG.STOP_LOSS_PERCENT) {
                         log(`🛑 STOP LOSS TRIGGERED (${pnlPercent.toFixed(2)}%)`);
+                        sendTelegramAlert(`*Solana Trader:* 🛑 Stop Loss Triggered! (${pnlPercent.toFixed(2)}%)`);
                         await swap(activeTrade.tokenAddress, CONFIG.SOL_MINT, activeTrade.amountTokens, 'SELL');
                         activeTrade = null;
                         dashboardState.activeTrade = null;
@@ -330,6 +395,7 @@ async function main() {
                         dashboardState.activeTrade = activeTrade;
                         saveDashboardState();
                         log(`🏁 Entered Position: ${token.baseToken.symbol}`);
+                        sendTelegramAlert(`*Solana Trader:* 🏁 Entered Position: ${token.baseToken.symbol}\nEntry: $${token.priceUsd}`);
                     }
                 } else {
                     log('💤 No suitable opportunities found. Sleeping...');

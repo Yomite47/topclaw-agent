@@ -1,4 +1,5 @@
 const fs = require('fs');
+require('dotenv').config();
 const https = require('https');
 const http = require('http');
 const { generatePsyOp, generateReply } = require('./psyops_module');
@@ -61,7 +62,8 @@ function log(msg) {
     saveDashboardState();
 
     // Critical Alerts to Telegram
-    if (msg.includes('🚨') || msg.includes('✅') || msg.includes('💰')) {
+    // Reduced verbosity: Only alert on 🚨 (Critical Errors) and 💰 (Profit/Wins)
+    if (msg.includes('🚨') || msg.includes('💰')) {
         sendTelegramAlert(`*TopClaw Update:*\n${msg}`);
     }
 }
@@ -274,15 +276,16 @@ async function autoReply() {
 
             log(`💬 Replying to [${post.id}]: "${replyContent}"`);
             
+            // Mark as replied BEFORE request to prevent spam loops if request fails
+            repliedPosts.push(post.id);
+            if (repliedPosts.length > 50) repliedPosts.shift(); // Keep memory small
+
             // Post Reply
             await mbRequest('POST', '/posts', {
                 content: replyContent,
                 reply_to: post.id // Assumption: Moltbook uses reply_to field or similar
             });
 
-            repliedPosts.push(post.id);
-            if (repliedPosts.length > 50) repliedPosts.shift(); // Keep memory small
-            
             // Update Recent Replies History
             recentReplies.push(replyContent);
             if (recentReplies.length > 20) recentReplies.shift(); // Remember last 20 replies
