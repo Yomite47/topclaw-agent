@@ -1,0 +1,36 @@
+const fetch = require('node-fetch');
+
+const CONFIG = {
+    botToken: process.env.TELEGRAM_BOT_TOKEN,
+    chatId: process.env.TELEGRAM_CHAT_ID
+};
+
+async function sendTelegramAlert(message) {
+    if (!CONFIG.botToken || !CONFIG.chatId) {
+        // Silent fail if not configured, so it doesn't crash the agent
+        return;
+    }
+
+    try {
+        const url = `https://api.telegram.org/bot${CONFIG.botToken}/sendMessage`;
+        const body = {
+            chat_id: CONFIG.chatId,
+            text: message,
+            parse_mode: 'Markdown'
+        };
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+
+        if (!response.ok) {
+            console.error(`Telegram Error: ${response.status} ${response.statusText}`);
+        }
+    } catch (error) {
+        console.error('Failed to send Telegram alert:', error.message);
+    }
+}
+
+module.exports = { sendTelegramAlert };

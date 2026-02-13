@@ -4,6 +4,7 @@ const http = require('http');
 const { generatePsyOp, generateReply } = require('./psyops_module');
 const { postUpdate } = require('./x_client');
 const { snipeMarket } = require('./market_sniper');
+const { sendTelegramAlert } = require('./telegram_client');
 
 // Configuration
 const CONFIG = {
@@ -58,6 +59,11 @@ function log(msg) {
     dashboardState.logs.unshift(logMsg); 
     if (dashboardState.logs.length > 50) dashboardState.logs.pop();
     saveDashboardState();
+
+    // Critical Alerts to Telegram
+    if (msg.includes('🚨') || msg.includes('✅') || msg.includes('💰')) {
+        sendTelegramAlert(`*TopClaw Update:*\n${msg}`);
+    }
 }
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));

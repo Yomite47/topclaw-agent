@@ -52,6 +52,11 @@ function log(msg) {
     const logMsg = `[${ts}] 🦁 ${msg}`;
     console.log(logMsg);
     
+    // Send trade executions to Telegram
+    if (msg.includes('BUY') || msg.includes('SELL') || msg.includes('PROFIT') || msg.includes('Rug Check Failed')) {
+        sendTelegramAlert(`*Solana Trader:*\n${msg}`);
+    }
+
     // Update Dashboard Logs
     dashboardState.logs.unshift(logMsg);
     if (dashboardState.logs.length > 50) dashboardState.logs.pop();
