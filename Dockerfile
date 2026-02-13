@@ -17,14 +17,14 @@ COPY package*.json ./
 # Install dependencies
 RUN npm install
 
+# Install PM2 globally
+RUN npm install pm2 -g
+
 # Copy all agent files
 COPY . .
-
-# Make start script executable
-RUN chmod +x start_agent.sh
 
 # Expose dashboard port
 EXPOSE 3000
 
-# Start the agents
-CMD ["./start_agent.sh"]
+# Start the agents with PM2
+CMD ["pm2-runtime", "start", "ecosystem.config.js"]

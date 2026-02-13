@@ -4,7 +4,7 @@
   "description": "",
   "main": "autonomous_trader.js",
   "scripts": {
-    "start": "bash start_agent.sh",
+    "start": "pm2-runtime start ecosystem.config.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
