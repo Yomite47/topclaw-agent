@@ -125,6 +125,44 @@ async function init() {
             log('⚠️ WARNING: Balance is very low. Transactions may fail.');
         }
 
+        // AUTO-DETECT EXISTING HOLDINGS (Sync with Cloud)
+        log('🔄 Scanning wallet for existing token holdings...');
+        const tokenAccounts = await connection.getParsedTokenAccountsByOwner(wallet.publicKey, {
+            programId: new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA")
+        });
+
+        for (const { account } of tokenAccounts.value) {
+            const info = account.data.parsed.info;
+            const mint = info.mint;
+            const amount = info.tokenAmount.uiAmount;
+
+            // Skip SOL and USDC (assuming standard addresses, but mainly skip small dust)
+            if (amount > 100 && mint !== CONFIG.SOL_MINT) {
+                log(`👀 Found existing holding: ${amount} of ${mint}`);
+                
+                // Fetch info to reconstruct activeTrade
+                try {
+                    const res = await fetchWithRetry(`${CONFIG.DEXSCREENER_API}/tokens/${mint}`);
+                    const data = await res.json();
+                    if (data.pairs && data.pairs[0]) {
+                        const pair = data.pairs[0];
+                        activeTrade = {
+                            tokenAddress: mint,
+                            symbol: pair.baseToken.symbol,
+                            entryPrice: parseFloat(pair.priceUsd), // Assume current price is entry (best guess for recovery)
+                            amountTokens: info.tokenAmount.amount, // Raw amount
+                            restored: true
+                        };
+                        dashboardState.activeTrade = activeTrade;
+                        log(`♻️  Auto-recovered active trade: ${activeTrade.symbol}`);
+                        break; // Only handle one active trade for now
+                    }
+                } catch (e) {
+                    log(`Failed to recover info for ${mint}: ${e.message}`);
+                }
+            }
+        }
+
     } catch (e) {
         log(`❌ Init Failed: ${e.message}`);
         process.exit(1);
