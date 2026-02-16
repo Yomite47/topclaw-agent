@@ -33,12 +33,12 @@ const CONFIG = {
     JUPITER_API: 'https://public.jupiterapi.com',
     DEXSCREENER_API: 'https://api.dexscreener.com/latest/dex',
     SOL_MINT: 'So11111111111111111111111111111111111111112',
-    TRADE_AMOUNT_SOL: parseFloat(process.env.TRADE_AMOUNT_SOL || '0.02'), // ~ $3-$4 depending on SOL price
-    SLIPPAGE_BPS: 50, // 0.5%
-    MIN_LIQUIDITY_USD: 1000,
-    MAX_MCAP_USD: 500000, // Look for micro-caps (<$500k)
-    MIN_VOLUME_1H: 1000,
-    CHECK_INTERVAL: 10000, // 10 seconds
+    TRADE_AMOUNT_SOL: parseFloat(process.env.TRADE_AMOUNT_SOL || '0.04'),
+    SLIPPAGE_BPS: 50,
+    MIN_LIQUIDITY_USD: 5000,
+    MAX_MCAP_USD: 750000,
+    MIN_VOLUME_1H: 5000,
+    CHECK_INTERVAL: 10000,
     TAKE_PROFIT_PERCENT: parseFloat(process.env.TAKE_PROFIT_PERCENT || '50'),
     STOP_LOSS_PERCENT: parseFloat(process.env.STOP_LOSS_PERCENT || '20')
 };

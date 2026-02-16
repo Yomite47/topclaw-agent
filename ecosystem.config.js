@@ -18,5 +18,14 @@ module.exports = {
         NODE_ENV: "production",
       },
     },
+    {
+      name: "telegram_bot",
+      script: "./telegram_bot.js",
+      watch: false,
+      max_memory_restart: "100M",
+      env: {
+        NODE_ENV: "production",
+      },
+    },
   ],
 };
